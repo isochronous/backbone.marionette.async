@@ -3,73 +3,78 @@
 
 // provides async rendering for collection views
 Async.CollectionView = {
-  render: function(){
+    render: function(opts) {
+        var that = this,
+            deferredRender = $.Deferred(),
+            promises,
+            options = opts || {};
 
-    var that = this,
-        deferredRender = $.Deferred(),
-        promises;
+        // can't use replace on collections... think about it - you'd wind up with the last element in the
+        // collection all by itself
+        options = _.extend(options, { replace: false});
 
-    this.isClosed = false;
+        this.isClosed = false;
 
-    this.triggerBeforeRender();
+        this.triggerBeforeRender();
 
-    this.closeEmptyView();
-    this.closeChildren();
+        // save this for use later by renderItemView() method
+        this.renderOptions = options;
 
-    if (this.collection && this.collection.length > 0) {
-      promises = this.showCollection();
-    } else {
-      var promise = this.showEmptyView();
-      promises = [promise];
-    }
+        this.closeEmptyView();
+        this.closeChildren();
 
-    deferredRender.done(function(){
-      that.triggerRendered();
-    });
+        if(this.collection && this.collection.length > 0) {
+            promises = this.showCollection();
+        } else {
+            var promise = this.showEmptyView();
+            promises = [promise];
+        }
 
-    $.when.apply(this, promises).then(function(){
-      deferredRender.resolveWith(that);
-    });
+        deferredRender.done(function() {
+            that.triggerRendered();
+        });
 
-    return deferredRender.promise();
-  },
+        $.when.apply(this, promises).then(function() {
+            deferredRender.resolveWith(that);
+        });
+
+        return deferredRender.promise();
+    },
 
   // Internal method to loop through each item in the
   // collection view and show it
   showCollection: function(){
-    var that = this,
-        promises = [],
-        ItemView = this.getItemView();
+        var that = this;
+        var promises = [];
 
-    this.collection.each(function(item, index){
-      var promise = that.addItemView(item, ItemView, index);
-      promises.push(promise);
-    });
+        var ItemView = this.getItemView();
+        this.collection.each(function(item, index) {
+            var promise = that.addItemView(item, ItemView, index);
+            promises.push(promise);
+        });
 
-    return promises;
+        return promises;
   },
 
   // Internal method to show an empty view in place of
   // a collection of item views, when the collection is
   // empty
   showEmptyView: function(promises){
-    var promise,
-        EmptyView = this.options.emptyView || this.emptyView;
-
-    if (EmptyView && !this._showingEmptyView){
-      var model;
-      this._showingEmptyView = true;
-      model = new Backbone.Model();
-      promise = this.addItemView(model, EmptyView, 0);
+    var promise;
+    var EmptyView = this.options.emptyView || this.emptyView;
+    if(EmptyView && !this._showingEmptyView) {
+        this._showingEmptyView = true;
+        var model = new Backbone.Model();
+        promise = this.addItemView(model, EmptyView, 0);
     }
     return promise;
   },
 
   renderItemView: function(view, index) {
     var that = this;
-    var viewRendered = view.render();
-    $.when(viewRendered).then(function(){
-      that.appendHtml(that, view, index);
+    var viewRendered = view.render(this.renderOptions);
+    $.when(viewRendered).then(function() {
+        that.appendHtml(that, view, index);
     });
     return viewRendered;
   }

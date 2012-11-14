@@ -6,45 +6,43 @@
 // `onRender` functions are all asynchronous, using `jQuery.Deferred()`
 // and `jQuery.when(...).then(...)` to manage async calls.
 Async.ItemView = {
-  render: function(){
-    var that = this,
-        deferredRender = $.Deferred();
+    render: function(opts) {
+        var that = this,
+            options = opts || {},
+            deferredRender = $.Deferred();
 
-    this.isClosed = false;
+        var beforeRenderDone = function() {
+            that.triggerMethod("before:render", that);
+            that.triggerMethod("item:before:render", that);
 
-    var beforeRenderDone = function() {
-      that.triggerMethod("before:render", that);
-      that.triggerMethod("item:before:render", that);
+            var deferredData = that.serializeData();
+            $.when(deferredData).then(dataSerialized);
+        };
 
-      var deferredData = that.serializeData();
-      $.when(deferredData).then(dataSerialized);
-    };
+        var dataSerialized = function(data) {
+            var template = that.getTemplate();
+            var asyncRender = Marionette.Renderer.render(template, that, options);
+            $.when(asyncRender).then(templateRendered);
+        };
 
-    var dataSerialized = function(data){
-      var template = that.getTemplate(),
-          asyncRender;
+        var templateRendered = function(html) {
+            //If either of these are true then $el's HTML has already been updated
+            if (!options.replace && !options.update) {
+                that.$el.html(html);
+            }
+            that.bindUIElements();
+            callDeferredMethod(that.onRender, onRenderDone, that);
+        };
 
-      data = that.mixinTemplateHelpers(data);
+        var onRenderDone = function() {
+            that.triggerMethod("render", that);
+            that.triggerMethod("item:rendered", that);
 
-      asyncRender = Marionette.Renderer.render(template, data);
-      $.when(asyncRender).then(templateRendered);
-    };
+            deferredRender.resolve();
+        };
 
-    var templateRendered = function(html){
-      that.$el.html(html);
-      this.bindUIElements();
-      callDeferredMethod(that.onRender, onRenderDone, that);
-    };
+        callDeferredMethod(this.beforeRender, beforeRenderDone, this);
 
-    var onRenderDone = function(){
-      that.triggerMethod("render", that);
-      that.triggerMethod("item:rendered", that);
-
-      deferredRender.resolve();
-    };
-
-    callDeferredMethod(this.beforeRender, beforeRenderDone, this);
-
-    return deferredRender.promise();
-  }
+        return deferredRender.promise();
+    }
 };

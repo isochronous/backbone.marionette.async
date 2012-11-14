@@ -4,27 +4,25 @@
 // Show a view that is rendered asynchronously, waiting for the view
 // to be rendered before swaping it in.
 Async.Region = {
-  show: function(view){
-    var that = this,
-        asyncShow = $.Deferred();
+    show: function(view, options) {
+        var that = this,
+            opts = options || {},
+            asyncShow = $.Deferred();
 
-    this.ensureEl();
-    this.close();
+        this.ensureEl();
+        this.close();
 
-    // Wait for the view to finish rendering
-    $.when(view.render()).then(function () {
-      that.open(view);
+        // Wait for the view to finish rendering
+        $.when(view.render(opts)).then(function() {
+            that.open(view);
 
-      if (view.onShow) { view.onShow(); }
-      view.triggerMethod("show");
+            Marionette.triggerMethod.call(view, "show");
+            Marionette.triggerMethod.call(that, "show", view);
 
-      if (that.onShow) { that.onShow(view); }
-      that.triggerMethod("show", view);
+            asyncShow.resolve();
+        });
 
-      asyncShow.resolve();
-    });
-
-    this.currentView = view;
-    return asyncShow.promise();
-  }
+        this.currentView = view;
+        return asyncShow.promise();
+    }
 };
