@@ -6,24 +6,25 @@
 // `onRender` functions are all asynchronous, using `jQuery.Deferred()`
 // and `jQuery.when(...).then(...)` to manage async calls.
 Async.ItemView = {
-    render: function(opts) {
+    render: function(options) {
         var that = this,
-            options = opts || {},
             deferredRender = $.Deferred();
+
+        options = options || {};
+
+        this.isClosed = false;
 
         var beforeRenderDone = function() {
             that.triggerMethod("before:render", that);
             that.triggerMethod("item:before:render", that);
 
-            var deferredData = that.serializeData();
-            $.when(deferredData).then(dataSerialized);
-        };
-
-        var dataSerialized = function(data) {
             var template = that.getTemplate();
             var asyncRender = Marionette.Renderer.render(template, that, options);
             $.when(asyncRender).then(templateRendered);
         };
+
+        // FIX: removed the dataSerialized function, because speck handles serializing our data for us
+        // in most cases
 
         var templateRendered = function(html) {
             //If either of these are true then $el's HTML has already been updated
@@ -31,7 +32,8 @@ Async.ItemView = {
                 that.$el.html(html);
             }
             that.bindUIElements();
-            callDeferredMethod(that.onRender, onRenderDone, that);
+            // FIX: don't need this anymore with triggerMethod()
+            onRenderDone();
         };
 
         var onRenderDone = function() {
@@ -41,7 +43,9 @@ Async.ItemView = {
             deferredRender.resolve();
         };
 
-        callDeferredMethod(this.beforeRender, beforeRenderDone, this);
+        // FIX: this.beforeRender should be handled by that.triggerMethod "before:render" now, so no need to defer
+        // the call like this.
+        //callDeferredMethod(this.beforeRender, beforeRenderDone, this);
 
         return deferredRender.promise();
     }

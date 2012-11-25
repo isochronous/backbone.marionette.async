@@ -16,7 +16,7 @@ Async.Renderer = {
                 update: false
             };
 
-        options = _.extend(options, opts);
+        _.extend(options, opts);
 
         if(options.replace === true) {
             // Speck.view returns the same as .html but automatically

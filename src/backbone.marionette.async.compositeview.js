@@ -5,21 +5,22 @@ Async.CompositeView = {
   // Renders the model once, and the collection once. Calling
   // this again will tell the model's view to re-render itself
   // but the collection will not re-render.
-    render: function(opts) {
+    render: function(options) {
         var that = this,
-            options = opts || {},
             compositeRendered = $.Deferred();
+
+        options = options || {};
 
         this.isClosed = false;
 
         this.resetItemViewContainer();
 
         var modelIsRendered = this.renderModel(options);
+
         $.when(modelIsRendered).then(function(html) {
             that.$el.html(html);
             that.bindUIElements();
             that.triggerMethod("composite:model:rendered");
-            that.triggerMethod("render");
 
             var collectionIsRendered = that.renderCollection();
             $.when(collectionIsRendered).then(function() {
@@ -28,6 +29,7 @@ Async.CompositeView = {
         });
 
         compositeRendered.done(function() {
+            that.triggerMethod("render");
             that.triggerMethod("composite:rendered");
         });
 
@@ -36,9 +38,9 @@ Async.CompositeView = {
 
     // Modified: Had to add an override for renderModel because it
     // sends the wrong parameters to Renderer.render
-    renderModel: function(opts) {
-        var speck = this.getTemplate(),
-            options = opts || {};
+    renderModel: function(options) {
+        var speck = this.getTemplate();
+        options = options || {};
         return Marionette.Renderer.render(speck, this, options);
     },
 

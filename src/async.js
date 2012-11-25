@@ -22,9 +22,12 @@ Backbone.Marionette.Async = (function(Backbone, Marionette, _, $){
 //= backbone.marionette.async.compositeview.js
 //= backbone.marionette.async.region.js
 //= backbone.marionette.async.renderer.js
-/*//= backbone.marionette.async.templatecache.js*/
-//= backbone.marionette.async.helpers.js
 //= async.init.js
+
+//// We don't need this with our setup
+//// backbone.marionette.async.templatecache.js
+//// backbone.marionette.async.helpers.js
+
 
   return Async;
 })(Backbone, Backbone.Marionette, _, window.jQuery || window.Zepto || window.ender);

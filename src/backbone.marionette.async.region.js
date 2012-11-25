@@ -6,23 +6,30 @@
 Async.Region = {
     show: function(view, options) {
         var that = this,
-            opts = options || {},
+            renderComplete,
             asyncShow = $.Deferred();
 
-        this.ensureEl();
-        this.close();
+        options = options || {};
 
-        // Wait for the view to finish rendering
-        $.when(view.render(opts)).then(function() {
+        var afterRender = function() {
             that.open(view);
 
             Marionette.triggerMethod.call(view, "show");
             Marionette.triggerMethod.call(that, "show", view);
 
             asyncShow.resolve();
-        });
+        };
+
+        this.ensureEl();
+        this.close();
+
+        renderComplete = view.render(options);
+
+        // Wait for the view to finish rendering
+        $.when(renderComplete).then(afterRender);
 
         this.currentView = view;
+
         return asyncShow.promise();
     }
 };

@@ -3,18 +3,17 @@
 
 // provides async rendering for collection views
 Async.CollectionView = {
-    render: function(opts) {
+    render: function(options) {
         var that = this,
             deferredRender = $.Deferred(),
-            promises,
-            options = opts || {};
+            promises;
+
+        options = options || {};
 
         // can't use replace on collections... think about it - you'd wind up with the last element in the
         // collection all by itself
-        options = _.extend(options, { replace: false});
-
+        options.replace = false;
         this.isClosed = false;
-
         this.triggerBeforeRender();
 
         // save this for use later by renderItemView() method
@@ -46,9 +45,10 @@ Async.CollectionView = {
   showCollection: function(){
         var that = this;
         var promises = [];
+        var ItemView;
 
-        var ItemView = this.getItemView();
         this.collection.each(function(item, index) {
+            ItemView = that.getItemView();
             var promise = that.addItemView(item, ItemView, index);
             promises.push(promise);
         });
@@ -61,7 +61,8 @@ Async.CollectionView = {
   // empty
   showEmptyView: function(promises){
     var promise;
-    var EmptyView = this.options.emptyView || this.emptyView;
+    var EmptyView = Marionette.getOption(this, "emptyView");
+
     if(EmptyView && !this._showingEmptyView) {
         this._showingEmptyView = true;
         var model = new Backbone.Model();
